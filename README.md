@@ -14,11 +14,13 @@ django的signal结合contenttypes可以实现好友最新动态，新鲜事，�
 
 在django中，有一个记录了项目中所有model元数据的表，就是ContentType，表中一条记录对应着一个存在的model，所以可以通过一个ContentType表的id和一个具体表中的id找到任何记录，及先通过ContenType表的id可以得到某个model，再通过model的id得到具体的对象。<br>
 ContentType表如下：<br>
+```
 class ContentType(models.Model):
     name = models.CharField(max_length=100)
     app_label = models.CharField(max_length=100)
     model = models.CharField(_('python model class name'), max_length=100)
     objects = ContentTypeManager()
+```
 通过app_label和model这2个字段，使用django.db.models.get_model这个方法就可以找出原来所对应的Model。而有了原来的Model的定义，再通过使用主键，就可以找到这个Model所对应的某条记录了。<br>
 
 什么是contenttypes framework（原文）：<br>
@@ -27,6 +29,7 @@ Django includes a “contenttypes” application that can track all of the model
 这样关于保存用户所产生的这个动作，比如用户写了一片日志，我们就可以使用Generic relations来指向某个Model实例比如Post，而那个Post实例才真正保存着关于用户动作的完整信息，即Post实例本身就是保存动作信息最好的地方。这样我们就可以通过存取Post实例里面的字段来描述用户的那个动作了，需要什么信息就往那里面去取。而且使用Generic relations的另外一个好处就是在删除了Post实例后，相应的新鲜事实例也会自动删除。<br>
 
 怎么从这张操作记录表中得到相应操作的model呢，这就得用到generic.GenericForeignKey，它是一个特殊的外键，可以指向任何Model的实例，在这里就可以通过这个字段来指向类似Post这样保存着用户动作信息的Model实例。<br>
+```
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.auth.models import User
@@ -67,7 +70,7 @@ def post_post_save(sender, instance, signal, *args, **kwargs):
     event = Event(user=post.author,event = post)
     event.save()
 signals.post_save.connect(post_post_save, sender=Post)
-
+```
 前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。利用connect这个函数来注册监听器， connect原型为：<br>
 def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):<br> 第一个参数是要执行的函数，第二个参数是指定发送信号的Class，这里指定为Post这个Model，对其他Model所发出的signal并不会执行注册的函数。<br>
 instance这个参数，即刚刚保存完的Model对象实例。创建事件的时候看到可以将post这个instance直接赋给generic.GenericForeignKey类型的字段，从而event实例就可以通过它来获取事件的真正信息了。<br>
