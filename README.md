@@ -57,9 +57,9 @@ class Post(models.Model):
   
 class Event(models.Model):
     user = models.ForeignKey(User)
+    #以下三个成员必须指定
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    
     event = generic.GenericForeignKey('content_type', 'object_id')
     
     created = models.DateTimeField(u'事件发生时间', auto_now_add = True)
@@ -77,6 +77,9 @@ def post_post_save(sender, instance, signal, *args, **kwargs):
     
 signals.post_save.connect(post_post_save, sender=Post)
 ```
+Event中使用 GenericForeignKey() 来指向其它的 Model 实例。为了使用它，还需要在 Model 中定义content_type 和 object_id 才可以。其中 content_type来自 ContentType 这个Model，记录Event所指向的其他 Model 实例的名字。object_id则是表示所指向的Model实例的id。<br>
+
+实际上根据上面的解释它只要有 content_type 和 object_id 两个字段就够了，不过我们总是需要亲自指定两个字段的值。而 GenericForeignKey 出现的目的就是要把这个过程给自动化了，只要给 content_object 赋一个对象，就会自动得根据这个对象的元数据 ，给content_type 和 object_id 赋值了。<br>
 ######signal
 前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。
 <br>利用connect这个函数来注册监听器， connect原型为：<br>
@@ -88,9 +91,7 @@ instance这个参数，即刚刚保存完的Model对象实例。创建事件的�
 
 通过这个字段可以得到与某篇post相关联的所有事件，最重要的一点是如果没有这个字段，那么当删除一篇post的时候，与该post关联的事件是不会自动删除的。反之有这个字段就会进行自动的级联删除。
 
-参考<br>
-http://onlypython.group.iteye.com/group/wiki/1361-django-39-s-use-of-signals-and-the-realization-of-new-features-contenttypes<br>
-http://blog.csdn.net/clh604/article/details/9369817
+
 
 
 
