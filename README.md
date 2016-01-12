@@ -1,5 +1,5 @@
 # django_signal_contenttypes
-django signal and contenttypes 信号和内容类型 contenttypes framework初探，可用于好友最新动态，新鲜事，消息通知等<br>
+##django signal and contenttypes 信号和内容类型 contenttypes framework初探，可用于好友最新动态，新鲜事，消息通知等<br>
 
 django中得signals和操作系统（linux）中的signal完全是两会事，后者的signal是软件中断，提供一种处理异步事件得方法，信号是系统定义好的，可用作进程间传递消息得一种方法，而django中的信号只是一个普通的类，不能跨进程，看其代码更像一个回调函数。<br>
 
@@ -9,8 +9,8 @@ django的signal结合contenttypes可以实现好友最新动态，新鲜事，�
 使用signals来监听用户的动作有很多好处，1、不管这个动作是发生在什么页面，甚至在很多页面都可以发生这个动作，都只需要写一次代码来监听保存object这个动作就可以了。2、可以完全不修改原来的代码就可以添加监听signals的功能。3、你几乎可以在signals监听代码里写任何代码，包括做一些判断是不是第一次发生此动作还是一个修改行为等等。<br>
 
 想要记录下每个操作，同时还能追踪到这个操作的具体动作。<br>
-首先用信号机制，监听信号，实现对信号的响应函数，在响应函数中记录发生的动作（可以当成一张记录表，相当于下文的Event，操作这张表）。<br>
-其次就是为了能追踪到操作的具体动作，必须从这张表中得到相应操作的model，这就得用到下面说的ContentType framework
+*首先用信号机制，监听信号，实现对信号的响应函数，在响应函数中记录发生的动作（记录在一张记录表，相当于下文的Event）。<br>
+*其次就是为了能追踪到操作的具体动作，必须从这张表中得到相应操作的model，这就得用到下面说的ContentType framework
 
 在django中，有一个记录了项目中所有model元数据的表，就是ContentType，表中一条记录对应着一个存在的model，所以可以通过一个ContentType表的id和一个具体表中的id找到任何记录，及先通过ContenType表的id可以得到某个model，再通过model的id得到具体的对象。<br>
 ContentType表如下：<br>
@@ -29,6 +29,7 @@ Django includes a “contenttypes” application that can track all of the model
 这样关于保存用户所产生的这个动作，比如用户写了一片日志，我们就可以使用Generic relations来指向某个Model实例比如Post，而那个Post实例才真正保存着关于用户动作的完整信息，即Post实例本身就是保存动作信息最好的地方。这样我们就可以通过存取Post实例里面的字段来描述用户的那个动作了，需要什么信息就往那里面去取。而且使用Generic relations的另外一个好处就是在删除了Post实例后，相应的新鲜事实例也会自动删除。<br>
 
 怎么从这张操作记录表中得到相应操作的model呢，这就得用到generic.GenericForeignKey，它是一个特殊的外键，可以指向任何Model的实例，在这里就可以通过这个字段来指向类似Post这样保存着用户动作信息的Model实例。<br>
+代码如下：<br>
 ```
 # -*- coding: utf-8 -*-
 from django.db import models
@@ -63,12 +64,14 @@ class Event(models.Model):
         return  u"%s的事件: %s" % (self.user, self.description())
     def description(self):
         return self.event.description()
+        
 def post_post_save(sender, instance, signal, *args, **kwargs):
     post = instance
     print sender,'\n', instance, '\n',signal
     print post.created ,post.updated
     event = Event(user=post.author,event = post)
     event.save()
+    
 signals.post_save.connect(post_post_save, sender=Post)
 ```
 前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。利用connect这个函数来注册监听器， connect原型为：<br>
