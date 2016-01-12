@@ -88,8 +88,8 @@ instance这个参数，即刚刚保存完的Model对象实例。创建事件的�
 
 通过这个字段可以得到与某篇post相关联的所有事件，最重要的一点是如果没有这个字段，那么当删除一篇post的时候，与该post关联的事件是不会自动删除的。反之有这个字段就会进行自动的级联删除。
 
-参考
-http://onlypython.group.iteye.com/group/wiki/1361-django-39-s-use-of-signals-and-the-realization-of-new-features-contenttypes
+参考<br>
+http://onlypython.group.iteye.com/group/wiki/1361-django-39-s-use-of-signals-and-the-realization-of-new-features-contenttypes<br>
 http://blog.csdn.net/clh604/article/details/9369817
 
 
