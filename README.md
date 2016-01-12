@@ -1,5 +1,5 @@
 # django_signal_contenttypes
-##django signal and contenttypes 信号和内容类型 contenttypes framework初探，可用于好友最新动态，新鲜事，消息通知等<br>
+####django signal and contenttypes 信号和内容类型 contenttypes framework初探，可用于好友最新动态，新鲜事，消息通知等<br>
 
 django中得signals和操作系统（linux）中的signal完全是两会事，后者的signal是软件中断，提供一种处理异步事件得方法，信号是系统定义好的，可用作进程间传递消息得一种方法，而django中的信号只是一个普通的类，不能跨进程，看其代码更像一个回调函数。<br>
 
@@ -12,6 +12,8 @@ django的signal结合contenttypes可以实现好友最新动态，新鲜事，�
 想要记录下每个操作，同时还能追踪到这个操作的具体动作。<br>
 *首先用信号机制，监听信号，实现对信号的响应函数，在响应函数中记录发生的动作（记录在一张记录表，相当于下文的Event）。<br>
 *其次就是为了能追踪到操作的具体动作，必须从这张表中得到相应操作的model，这就得用到下面说的ContentType framework
+
+######contenttypes framework
 
 在django中，有一个记录了项目中所有model元数据的表，就是ContentType，表中一条记录对应着一个存在的model，所以可以通过一个ContentType表的id和一个具体表中的id找到任何记录，及先通过ContenType表的id可以得到某个model，再通过model的id得到具体的对象。<br>
 ContentType表如下：<br>
@@ -75,6 +77,7 @@ def post_post_save(sender, instance, signal, *args, **kwargs):
     
 signals.post_save.connect(post_post_save, sender=Post)
 ```
+######signal
 前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。
 <br>利用connect这个函数来注册监听器， connect原型为：<br>
 def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):<br> 第一个参数是要执行的函数，第二个参数是指定发送信号的Class，这里指定为Post这个Model，对其他Model所发出的signal并不会执行注册的函数。<br>
@@ -85,6 +88,9 @@ instance这个参数，即刚刚保存完的Model对象实例。创建事件的�
 
 通过这个字段可以得到与某篇post相关联的所有事件，最重要的一点是如果没有这个字段，那么当删除一篇post的时候，与该post关联的事件是不会自动删除的。反之有这个字段就会进行自动的级联删除。
 
+参考
+http://onlypython.group.iteye.com/group/wiki/1361-django-39-s-use-of-signals-and-the-realization-of-new-features-contenttypes
+http://blog.csdn.net/clh604/article/details/9369817
 
 
 
