@@ -5,6 +5,7 @@ django中得signals和操作系统（linux）中的signal完全是两会事，�
 
 django的signal结合contenttypes可以实现好友最新动态，新鲜事，消息通知等功能。<br>
 总体来说这个功能就是在用户发生某个动作的时候将其记录下来或者附加某些操作，比如通知好友。要实现这种功能可以在动作发生的代码里实现也可以通过数据库触发器等实现，但在django中，一个很简单的方法的就是使用signals。<br>
+<br>
 当django保存一个object的时候会发出一系列的signals，可以通过对这些signals注册listener，从而在相应的signals发出时执行一定的代码。<br>
 使用signals来监听用户的动作有很多好处，1、不管这个动作是发生在什么页面，甚至在很多页面都可以发生这个动作，都只需要写一次代码来监听保存object这个动作就可以了。2、可以完全不修改原来的代码就可以添加监听signals的功能。3、你几乎可以在signals监听代码里写任何代码，包括做一些判断是不是第一次发生此动作还是一个修改行为等等。<br>
 
@@ -74,9 +75,11 @@ def post_post_save(sender, instance, signal, *args, **kwargs):
     
 signals.post_save.connect(post_post_save, sender=Post)
 ```
-前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。利用connect这个函数来注册监听器， connect原型为：<br>
+前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。
+<br>利用connect这个函数来注册监听器， connect原型为：<br>
 def connect(self, receiver, sender=None, weak=True, dispatch_uid=None):<br> 第一个参数是要执行的函数，第二个参数是指定发送信号的Class，这里指定为Post这个Model，对其他Model所发出的signal并不会执行注册的函数。<br>
 instance这个参数，即刚刚保存完的Model对象实例。创建事件的时候看到可以将post这个instance直接赋给generic.GenericForeignKey类型的字段，从而event实例就可以通过它来获取事件的真正信息了。<br>
+<br>
 最后有一点需要的注意的是，Post的Model定义里现在多了一个字段：<br>
     events = generic.GenericRelation('Event') 
 
