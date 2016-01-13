@@ -76,6 +76,9 @@ def post_post_save(sender, instance, signal, *args, **kwargs):
     event.save()
     
 signals.post_save.connect(post_post_save, sender=Post)
+###当然你也可以监听多个model的post_save信号
+###signals.post_save.connect(post_post_save, sender=Book)
+只要model中有object的保存操作，都将执行post_post_save函数，故可以在这个接受函数中实现通知好友等功能
 ```
 Event中使用 GenericForeignKey() 来指向其它的 Model 实例。为了使用它，还需要在 Model 中定义content_type 和 object_id 才可以。其中 content_type来自 ContentType 这个Model，记录Event所指向的其他 Model 实例的名字。object_id则是表示所指向的Model实例的id。<br>
 
