@@ -83,6 +83,11 @@ signals.post_save.connect(post_post_save, sender=Post)
 Event中使用 GenericForeignKey() 来指向其它的 Model 实例。为了使用它，还需要在 Model 中定义content_type 和 object_id 才可以。其中 content_type来自 ContentType 这个Model，记录Event所指向的其他 Model 实例的名字。object_id则是表示所指向的Model实例的id。<br>
 
 实际上根据上面的解释它只要有 content_type 和 object_id 两个字段就够了，不过我们总是需要亲自指定两个字段的值。而 GenericForeignKey 出现的目的就是要把这个过程给自动化了，只要给 content_object 赋一个对象，就会自动得根据这个对象的元数据 ，给content_type 和 object_id 赋值了。<br>
+上面示例可通过如下代码获得具体的对象事件：<br>
+```
+    entity = Event.objects.get(pk=1)
+    object = entity.event
+```
 ######signal
 前面说到django在保存一个object的时候会发出一系列signals，在这里我们所监听的是signals.post_save这个signal，这个signal是在django保存完一个对象后发出的，django中已定义好得一些signal, 在django/db/models/signal.py中可以查看，同时也可以自定义信号。
 <br>利用connect这个函数来注册监听器， connect原型为：<br>
